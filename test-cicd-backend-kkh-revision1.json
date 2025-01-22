@@ -1,0 +1,151 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:396913715402:task-definition/test-cicd-backend-kkh:1",
+    "containerDefinitions": [
+        {
+            "name": "test-backend",
+            "image": "396913715402.dkr.ecr.ap-northeast-2.amazonaws.com/test_cicd_backend_kkh@sha256:6718743b1f941fb70fdb1abc9c4d0eb75f6ec9a448836d3d51fb541b3ded626d",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "test-backend-80-tcp",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "kis.api.baseUrl",
+                    "value": "https://openapi.koreainvestment.com:9443"
+                },
+                {
+                    "name": "spring.kafka.consumer.group-id",
+                    "value": "volume-rank-consumer-group"
+                },
+                {
+                    "name": "spring.kafka.bootstrap-servers",
+                    "value": "ip-10-0-3-16.ap-northeast-2.compute.internal:9092"
+                },
+                {
+                    "name": "kis.api.appSecret",
+                    "value": "/kL1FNiUPLolAph65eiRZtXNnAoVthJ+xJHnvSQOClVxA4BUUy9O/OBrTU53VvGeJZl7LJTY/QLsdHj66dqWoiNJ+65LePyeArmPLhGOGam9cmexSu5sb1KKHb7x6jx3H+BXUsqgtgYMur7GR5DYzT8n7T3xMF39t1XRq97a+FVYFqG3Xq4="
+                },
+                {
+                    "name": "spring.datasource.password",
+                    "value": "adminpassword!"
+                },
+                {
+                    "name": "spring.jpa.hibernate.ddl-auto",
+                    "value": "none"
+                },
+                {
+                    "name": "spring.datasource.driver-class-name",
+                    "value": "com.mysql.cj.jdbc.Driver"
+                },
+                {
+                    "name": "spring.data.redis.port",
+                    "value": "6379"
+                },
+                {
+                    "name": "kis.api.appKey",
+                    "value": "PS49bFwVB1JzdapDPspFRBss6h9JJV6HQk21"
+                },
+                {
+                    "name": "spring.datasource.username",
+                    "value": "admin"
+                },
+                {
+                    "name": "spring.datasource.url",
+                    "value": "jdbc:mysql://stock-test-database.cd6ys4cm8cld.ap-northeast-2.rds.amazonaws.com:3306/stockdatabase?serverTimezone=Asia/Seoul"
+                },
+                {
+                    "name": "spring.data.redis.host",
+                    "value": "ip-10-0-3-29.ap-northeast-2.compute.internal"
+                },
+                {
+                    "name": "spring.jpa.hibernate.naming.physical-strategy",
+                    "value": "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/test-backend",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "test-cicd-backend-kkh",
+    "taskRoleArn": "arn:aws:iam::396913715402:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::396913715402:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X84_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "registeredAt": "2025-01-22T05:12:27.359Z",
+    "registeredBy": "arn:aws:iam::396913715402:user/geoninyo",
+    "enableFaultInjection": false,
+    "tags": []
+}
