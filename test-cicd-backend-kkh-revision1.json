@@ -141,7 +141,7 @@
     "cpu": "1024",
     "memory": "3072",
     "runtimePlatform": {
-        "cpuArchitecture": "x84_64",
+        "cpuArchitecture": "x86_64",
         "operatingSystemFamily": "LINUX"
     },
     "registeredAt": "2025-01-22T05:12:27.359Z",
