@@ -36,7 +36,7 @@ env:
   ECR_REPOSITORY: test_cicd_backend_kkh           # set this to your Amazon ECR repository name
   ECS_SERVICE: test-cicd-backend-kkh                 # set this to your Amazon ECS service name
   ECS_CLUSTER: Test-cicd                 # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: test-cicd-backend-kkh-revision1.json # set this to the path to your Amazon ECS task definition
+  ECS_TASK_DEFINITION: ./test-cicd-backend-kkh-revision1.json # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
   CONTAINER_NAME: test-backend           # set this to the name of the container in the
                                                # containerDefinitions section of your task definition
@@ -74,9 +74,9 @@ jobs:
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./backend/Dockerfile .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f ./backend/Dockerfile .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:lastest
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:lastest" >> $GITHUB_OUTPUT
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
