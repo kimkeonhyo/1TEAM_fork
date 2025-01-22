@@ -29,14 +29,6 @@
                     "value": "ip-10-0-3-16.ap-northeast-2.compute.internal:9092"
                 },
                 {
-                    "name": "kis.api.appSecret",
-                    "value": "/kL1FNiUPLolAph65eiRZtXNnAoVthJ+xJHnvSQOClVxA4BUUy9O/OBrTU53VvGeJZl7LJTY/QLsdHj66dqWoiNJ+65LePyeArmPLhGOGam9cmexSu5sb1KKHb7x6jx3H+BXUsqgtgYMur7GR5DYzT8n7T3xMF39t1XRq97a+FVYFqG3Xq4="
-                },
-                {
-                    "name": "spring.datasource.password",
-                    "value": "adminpassword!"
-                },
-                {
                     "name": "spring.jpa.hibernate.ddl-auto",
                     "value": "none"
                 },
@@ -47,14 +39,6 @@
                 {
                     "name": "spring.data.redis.port",
                     "value": "6379"
-                },
-                {
-                    "name": "kis.api.appKey",
-                    "value": "PS49bFwVB1JzdapDPspFRBss6h9JJV6HQk21"
-                },
-                {
-                    "name": "spring.datasource.username",
-                    "value": "admin"
                 },
                 {
                     "name": "spring.datasource.url",
