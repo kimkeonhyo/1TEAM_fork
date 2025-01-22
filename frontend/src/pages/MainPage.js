@@ -9,7 +9,6 @@ const MainPage = () => {
 
   const [filteredStocks, setFilteredStocks] = useState([]);
   const [stockData, setStockData] = useState({}); // WebSocket에서 받은 실시간 데이터 저장
-  const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -23,10 +22,12 @@ const MainPage = () => {
         `https://${process.env.REACT_APP_STOCK_BACKEND_URL}/api/redis-data/${stockId}`
       );
       if (!response.ok) {
-        throw new Error(`[ERROR] Redis 데이터 검색 실패 for stockId: ${stockId}`);
+        throw new Error(
+          `[ERROR] Redis 데이터 검색 실패 for stockId: ${stockId}`
+        );
       }
       const data = await response.json();
-      console.log("[LOG] /api/redis-data 성공")
+      console.log('[LOG] /api/redis-data 성공');
       // 데이터가 배열일 경우 처리
       return Array.isArray(data) && data.length > 0
         ? JSON.parse(data[0])
@@ -46,10 +47,10 @@ const MainPage = () => {
         throw new Error(`Popular 데이터 검색 실패 for stockId: ${stockId}`);
       }
       const data = await response.json();
-      console.log("[LOG] /api/get-popular 성공")
+      console.log('[LOG] /api/get-popular 성공');
       return data;
     } catch (error) {
-      console.error("[ERROR] /api/get-popular 오류 발생"+ error);
+      console.error('[ERROR] /api/get-popular 오류 발생' + error);
       return null;
     }
   };
@@ -73,14 +74,20 @@ const MainPage = () => {
 
         const stockIds = [...stockIdsFromApi];
 
-        console.log("[LOG] /api/get-10-rankins-stockid, stockid: "+JSON.stringify(stockIds));
+        console.log(
+          '[LOG] /api/get-10-rankins-stockid, stockid: ' +
+            JSON.stringify(stockIds)
+        );
 
         // Backend로 subscriptionList 전달
-        await fetch(`https://${process.env.REACT_APP_STOCK_BACKEND_URL}/subscriptions/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(stockIds),
-        });
+        await fetch(
+          `https://${process.env.REACT_APP_STOCK_BACKEND_URL}/subscriptions/update`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(stockIds),
+          }
+        );
 
         const stockDataPromises = stockIds.map(async (stockId) => {
           const popularData = await fetchPopularData(stockId);
@@ -95,8 +102,7 @@ const MainPage = () => {
 
         setStockData(stockDataMap);
         setFilteredStocks(stockIds);
-        console.log("[LOG] MainPage 성공")
-
+        console.log('[LOG] MainPage 성공');
       } catch (error) {
         console.error('[ERROR] 검색 데이터 로드 실패:', error);
       }
@@ -107,7 +113,9 @@ const MainPage = () => {
 
   // WebSocket 연결
   useEffect(() => {
-    const socket = new WebSocket(`wss://${process.env.REACT_APP_STOCK_BACKEND_URL}/ws/stock`);
+    const socket = new WebSocket(
+      `wss://${process.env.REACT_APP_STOCK_BACKEND_URL}/ws/stock`
+    );
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -121,17 +129,14 @@ const MainPage = () => {
 
     socket.onopen = () => {
       console.log('[LOG] WebSocket 연결 성공');
-      setIsWebSocketConnected(true);
     };
 
     socket.onerror = (error) => {
       console.error('[ERROR] WebSocket 에러:', error);
-      setIsWebSocketConnected(false);
     };
 
     socket.onclose = () => {
       console.error('[LOG,ERROR] WebSocket 연결 종료');
-      setIsWebSocketConnected(false);
     };
 
     return () => {
@@ -141,7 +146,7 @@ const MainPage = () => {
 
   useEffect(() => {
     filteredStocks.forEach((stockId) => {
-      if (!isWebSocketConnected && !stockData[stockId]?.currentPrice) {
+      if (!stockData[stockId]?.currentPrice) {
         fetchRedisFallback(stockId).then((redisData) => {
           if (redisData) {
             setStockData((prevData) => ({
@@ -153,7 +158,7 @@ const MainPage = () => {
         });
       }
     });
-  }, [filteredStocks, stockData, isWebSocketConnected]);
+  }, [filteredStocks, stockData]);
 
   //console.log(stockData);
 
