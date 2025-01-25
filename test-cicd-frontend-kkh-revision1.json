@@ -93,11 +93,10 @@
     "cpu": "1024",
     "memory": "3072",
     "runtimePlatform": {
-        "cpuArchitecture": "ARM64",
+        "cpuArchitecture": "x86_64",
         "operatingSystemFamily": "LINUX"
     },
     "registeredAt": "2025-01-25T02:56:39.804Z",
     "registeredBy": "arn:aws:iam::396913715402:user/geoninyo",
-    "enableFaultInjection": false,
     "tags": []
 }
