@@ -11,7 +11,7 @@ RUN npm install
 
 # Copy the application source code
 COPY . .
-RUN ls -al
+RUN ls -al && cd frontend
 # Build the React application for production
 RUN npm run build
 
