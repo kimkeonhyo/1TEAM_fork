@@ -2,8 +2,8 @@ FROM node:16 AS build
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY ./frontend/package.json ./frontend/package-lock.json ./
-
+# COPY ./frontend/package.json ./frontend/package-lock.json ./
+COPY . .
 RUN cd frontend
 
 COPY ../.env .env
@@ -13,7 +13,7 @@ RUN ls -al
 RUN npm install
 
 # Copy the application source code
-COPY . .
+# COPY . .
 RUN ls -al
 # Build the React application for production
 RUN npm run build
