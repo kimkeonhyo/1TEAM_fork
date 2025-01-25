@@ -4,19 +4,19 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 # COPY ./frontend/package.json ./frontend/package-lock.json ./
 COPY . .
-RUN cd frontend
+# RUN cd frontend
 
 COPY ../.env .env
 
 RUN ls -al
 # Install dependencies
-RUN npm install
+RUN cd frontend && npm install
 
 # Copy the application source code
 # COPY . .
 RUN ls -al
 # Build the React application for production
-RUN npm run build
+RUN cd frontend && npm run build
 
 # Stage 2: Serve the app with Nginx
 FROM nginx:alpine
