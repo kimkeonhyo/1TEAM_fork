@@ -8,10 +8,10 @@ COPY .env .env
 
 # Install dependencies
 RUN npm install
-RUN ls -al
+
 # Copy the application source code
 COPY . .
-
+RUN ls -al
 # Build the React application for production
 RUN npm run build
 
