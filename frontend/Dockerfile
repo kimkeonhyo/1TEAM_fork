@@ -2,7 +2,7 @@ FROM node:16 AS build
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY ./frontend/package.json package-lock.json ./
+COPY ./package.json package-lock.json ./
 
 # Install dependencies
 RUN npm install
