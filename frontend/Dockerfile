@@ -8,7 +8,7 @@ COPY .env .env
 
 # Install dependencies
 RUN npm install
-
+RUN ls -al
 # Copy the application source code
 COPY . .
 
