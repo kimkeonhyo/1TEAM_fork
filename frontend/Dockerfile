@@ -6,17 +6,17 @@ WORKDIR /app
 COPY . .
 # RUN cd frontend
 
-COPY ../.env .env
+COPY .env .env
 
 RUN ls -al
 # Install dependencies
-RUN cd frontend && npm install
+RUN npm install
 
 # Copy the application source code
 # COPY . .
 RUN ls -al
 # Build the React application for production
-RUN cd frontend && npm run build
+RUN cd npm run build
 
 # Stage 2: Serve the app with Nginx
 FROM nginx:alpine
