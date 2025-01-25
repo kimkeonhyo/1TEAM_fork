@@ -17,12 +17,24 @@
             "essential": true,
             "environment": [
                 {
+                    "name": "kis.api.baseUrl",
+                    "value": "https://openapi.koreainvestment.com:9443"
+                },
+                {
+                    "name": "spring.kafka.consumer.group-id",
+                    "value": "volume-rank-consumer-group"
+                },
+                {
                     "name": "spring.kafka.bootstrap-servers",
                     "value": "ip-10-0-3-16.ap-northeast-2.compute.internal:9092"
                 },
                 {
+                    "name": "spring.datasource.password",
+                    "value": "adminpassword!"
+                },
+                {
                     "name": "spring.jpa.hibernate.ddl-auto",
-                    "value": "none"
+                    "value": "update"
                 },
                 {
                     "name": "spring.datasource.driver-class-name",
@@ -31,6 +43,10 @@
                 {
                     "name": "spring.data.redis.port",
                     "value": "6379"
+                },
+                {
+                    "name": "spring.datasource.username",
+                    "value": "admin"
                 },
                 {
                     "name": "spring.datasource.url",
