@@ -20,7 +20,6 @@ public class StockService {
         this.stockRepository = stockRepository;
     }
 
-    @Transactional
     public List<String> findWith(String stockName) throws Exception {
         List<String> lst = new ArrayList<>();
 

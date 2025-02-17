@@ -69,7 +69,7 @@ public class KafkaConsumerService {
 
             // Redis에 최신 5개의 데이터 저장
             listOperations.leftPush(redisKey, jsonData);
-            listOperations.trim(redisKey, 0, 4); // 리스트 크기를 5개로 제한
+            listOperations.trim(redisKey, 0, 4);  // 리스트 크기를 5개로 제한
 
             //log.info("Redis에 최신 5개 데이터 저장 완료: {}", redisKey);
 

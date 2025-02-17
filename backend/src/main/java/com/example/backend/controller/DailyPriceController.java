@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.backend.service.KisTokenService;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 @Slf4j
@@ -21,7 +23,7 @@ public class DailyPriceController {
     private final KisTokenService kisTokenService;
 
     @PostMapping("/{stockCode}")
-    public ResponseEntity<List<DailyPriceDTO>> postDailyPrices(@PathVariable String stockCode) {
+    public ResponseEntity<List<DailyPriceDTO>> postDailyPrices(@Valid @PathVariable String stockCode) {
         try {
             String accessToken = kisTokenService.getCachedAccessToken();
             List<DailyPriceDTO> dailyPrices = dailyPriceService.postDailyPrice(stockCode, accessToken);

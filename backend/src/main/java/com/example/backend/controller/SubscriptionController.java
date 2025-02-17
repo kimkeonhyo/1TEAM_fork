@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import com.example.backend.websocket.KisWebSocketClient;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/subscriptions")
 public class SubscriptionController {
@@ -17,7 +19,7 @@ public class SubscriptionController {
     private KisWebSocketClient kisWebSocketClient;
 
     @PostMapping("/update")
-    public ResponseEntity<Void> updateSubscriptions(@RequestBody List<String> stockIds) {
+    public ResponseEntity<Void> updateSubscriptions(@Valid @RequestBody List<String> stockIds) {
         kisWebSocketClient.updateSubscriptions(stockIds.toArray(new String[0]));
         return ResponseEntity.ok().build();
     }

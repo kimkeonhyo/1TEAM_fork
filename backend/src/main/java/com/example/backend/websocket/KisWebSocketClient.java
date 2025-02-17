@@ -50,7 +50,7 @@ public class KisWebSocketClient {
         this.webSocket = client.newWebSocket(request, new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
-                log.info("[LOG] 웹소켓 연결 성공");
+                //log.info("[LOG] 웹소켓 연결 성공");
                 String[] subscriptionlist = {}; //구독할 리스트(삼성전자, sk하이닉스)
                 subscribeStocks(subscriptionlist);
 

@@ -1,6 +1,9 @@
 package com.example.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
 @Entity
@@ -9,12 +12,16 @@ import lombok.Getter;
 public class Stock {
 
     @Id
+    // @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    // @NotNull
     @Column(name = "stock_name", nullable = false)
     private String stockName;
 
+    // @NotNull
+    @Size(max=6)
     @Column(name = "stock_id", nullable = false, unique = true)
     private String stockId;
 

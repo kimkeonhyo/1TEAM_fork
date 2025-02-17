@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StockInfo, TabsContainer, Tab } from '../styles/StockPageStyle';
 import '../styles/MainVars.css';
@@ -12,6 +12,8 @@ const StockPage = () => {
   const [stockData, setStockData] = useState({}); // 초기값을 빈 배열로 설정
   const [selectedStock, setSelectedStock] = useState(null); // 선택된 종목 데이터
   const navigate = useNavigate();
+  const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
+  const hasLogged = useRef(false); // 최초 실행 여부 추적
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -21,6 +23,52 @@ const StockPage = () => {
     if (searchTerm.trim()) {
       navigate(`/search?query=${searchTerm}`);
     }
+  };
+
+  const connectWebSocket = () => {
+    const socket = new WebSocket(`wss://${process.env.REACT_APP_STOCK_BACKEND_URL}/ws/stock`);
+
+    socket.onopen = () => {
+      console.log('[LOG] WebSocket 연결 성공');
+
+      hasLogged.current=false;
+      setIsWebSocketConnected(true);
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        setStockData((prevData) => {
+          const updatedStockData = {
+            ...prevData,
+            [data.stockId]: [
+              data,
+              ...(prevData[data.stockId] || []).slice(0, 10),
+            ], // 최신 5개 데이터 유지
+          };
+
+          // WebSocket으로 받은 데이터가 현재 선택된 stockId와 일치하면 업데이트
+          if (data.stockId === stockId) {
+            setSelectedStock(data);
+          }
+
+          return updatedStockData;
+        });
+      };
+    };
+
+    socket.onerror = (error) => {
+      console.error('[ERROR] WebSocket 에러:', error);
+      hasLogged.current=false;
+      setIsWebSocketConnected(false);
+      socket.close();
+    };
+
+    socket.onclose = () => {
+      console.log('[LOG,ERROR] WebSocket 연결 종료');
+      hasLogged.current=false;
+      setIsWebSocketConnected(false);
+    };
+    return socket;
   };
 
   const fetchStockData = async (stockId) => {
@@ -37,7 +85,7 @@ const StockPage = () => {
       }
 
       const dailyData = await dailyResponse.json();
-      console.log("[LOG] /api/daily-price 성공"+dailyData);
+      console.log("[LOG] /api/daily-price 성공");
 
       return dailyData;
     } catch (error) {
@@ -48,6 +96,7 @@ const StockPage = () => {
 
   useEffect(() => {
     const fetchInitialData = async (stockId) => {
+      console.log("[LOG,MONITORING] StockPage Start at "+ new Date().toLocaleTimeString());
       try {
         const response = await fetch(
           `https://${process.env.REACT_APP_STOCK_BACKEND_URL}/api/redis-data/${stockId}`
@@ -73,41 +122,7 @@ const StockPage = () => {
 
   // WebSocket 연결
   useEffect(() => {
-    const socket = new WebSocket(`wss://${process.env.REACT_APP_STOCK_BACKEND_URL}/ws/stock`);
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      //console.log("[LOG] /ws/stock "+data);
-
-      setStockData((prevData) => {
-        const updatedStockData = {
-          ...prevData,
-          [data.stockId]: [
-            data,
-            ...(prevData[data.stockId] || []).slice(0, 10),
-          ], // 최신 5개 데이터 유지
-        };
-
-        // WebSocket으로 받은 데이터가 현재 선택된 stockId와 일치하면 업데이트
-        if (data.stockId === stockId) {
-          setSelectedStock(data);
-        }
-        //console.log("[LOG] /ws/stock 성공")
-        return updatedStockData;
-      });
-    };
-
-    socket.onopen = () => {
-      console.log('[LOG] WebSocket 연결 성공');
-    };
-
-    socket.onerror = (error) => {
-      console.error('[ERROR] WebSocket 에러:', error);
-    };
-
-    socket.onclose = () => {
-      console.log('[LOG,ERROR] WebSocket 연결 종료');
-    };
+    const socket = connectWebSocket();
 
     return () => {
       socket.close();
@@ -129,9 +144,15 @@ const StockPage = () => {
     };
 
     fetchDailyData();
+
   }, [stockId]);
 
-  //console.log(dailyData);
+  useEffect(() => {
+    if (!hasLogged.current && isWebSocketConnected && stockData[stockId] && dailyData) {
+      hasLogged.current = true;
+      console.log("[LOG,MONITORING] StockPage End at "+ new Date().toLocaleTimeString());
+    }
+  }, [isWebSocketConnected, stockData, dailyData, stockId]);
 
   return (
     <div className="_0-1-home">

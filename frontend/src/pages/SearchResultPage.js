@@ -2,15 +2,53 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/MainVars.css';
 import '../styles/MainStyle.css';
+import { useRef } from "react";
 
 const SearchResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search).get('query');
+  const hasLogged = useRef(false); // 최초 실행 여부 추적
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredStocks, setFilteredStocks] = useState([]);
   const [stockData, setStockData] = useState({}); // WebSocket에서 받은 실시간 데이터 저장
+  const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
+
+  const connectWebSocket = () => {
+    const socket = new WebSocket(`wss://${process.env.REACT_APP_STOCK_BACKEND_URL}/ws/stock`);
+
+    socket.onopen = () => {
+      console.log('[LOG] WebSocket 연결 성공');
+      hasLogged.current=false;
+      setIsWebSocketConnected(true);
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        // 실시간 데이터 갱신
+        setStockData((prevData) => ({
+          ...prevData,
+          [data.stockId]: { ...prevData[data.stockId], ...data },
+        }));
+      }
+    }
+
+    socket.onerror = (error) => {
+      console.error('[ERROR] WebSocket 에러:', error);
+      hasLogged.current=false;
+      setIsWebSocketConnected(false);
+      socket.close();
+    };
+
+    socket.onclose = () => {
+      console.error('[LOG,ERROR] WebSocket 연결 종료');
+      hasLogged.current=false;
+      setIsWebSocketConnected(false);
+    };
+
+    return socket;
+  };
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -27,7 +65,7 @@ const SearchResultPage = () => {
         throw new Error(`[ERROR] 데이터 검색 실패 for stockId: ${stockId}`);
       }
       const data = await response.json();
-      console.log("/api/get-popular API 성공")
+      console.log("[LOG] /api/get-popular API 성공")
       return data;
     } catch (error) {
       console.error("[ERROR] /api/get-popular 오류 발생"+error);
@@ -36,13 +74,14 @@ const SearchResultPage = () => {
   };
 
   useEffect(() => {
+
     const fetchStockIds = async () => {
       try {
         const response = await fetch(
           `https://${process.env.REACT_APP_STOCK_BACKEND_URL}/api/search/${query}`
         );
         if (!response.ok) {
-          throw new Error('[ERROR] Stock ID 검색 실패');
+          throw new Error('[ERROR] Stock IDs 검색 실패');
         }
 
         const stockIds = await response.json(); // 주어진 stockId 배열
@@ -67,6 +106,7 @@ const SearchResultPage = () => {
             }));
           }
         });
+
         console.log("[LOG] /subscriptions/update 성공")
       } catch (error) {
         console.error('[ERROR] 검색 데이터 로드 실패:', error);
@@ -74,38 +114,14 @@ const SearchResultPage = () => {
     };
 
     if (query) {
+      console.log("[LOG,MONITORING] SearchResultPage Start at "+ new Date().toLocaleTimeString());
       fetchStockIds();
     }
   }, [query]);
 
   // WebSocket 연결
   useEffect(() => {
-    const socket = new WebSocket(`wss://${process.env.REACT_APP_STOCK_BACKEND_URL}/ws/stock`);
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      // 실시간 데이터 갱신
-      setStockData((prevData) => ({
-        ...prevData,
-        [data.stockId]: {
-          ...prevData[data.stockId],
-          ...data,
-        },
-      }));
-    };
-
-    socket.onopen = () => {
-      console.log('[LOG] WebSocket 연결 성공');
-    };
-
-    socket.onerror = (error) => {
-      console.error('[ERROR] WebSocket 에러:', error);
-    };
-
-    socket.onclose = () => {
-      console.log('[LOG,ERROR] WebSocket 연결 종료');
-    };
+    const socket = connectWebSocket();
 
     return () => {
       socket.close();
@@ -125,6 +141,7 @@ const SearchResultPage = () => {
       if (data.length > 0) {
         return JSON.parse(data[0]);
       }
+
       return null;
     } catch (error) {
       console.error("[ERROR] /api/redis-data 오류 발생"+error);
@@ -219,6 +236,13 @@ const SearchResultPage = () => {
                           }));
                         }
                       });
+                    }
+
+                    const allDataFetched = filteredStocks.every((stockId) => stockData[stockId]?.currentPrice);
+
+                    if (allDataFetched && !hasLogged.current && isWebSocketConnected) {
+                      console.log("[LOG,MONITORING] SearchResultPage End at "+ new Date().toLocaleTimeString());
+                      hasLogged.current = true;
                     }
 
                     return (
