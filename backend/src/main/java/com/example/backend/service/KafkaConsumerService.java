@@ -3,14 +3,25 @@ package com.example.backend.service;
 import com.example.backend.entity.Stock;
 import com.example.backend.repository.StockRepository;
 import com.example.backend.websocket.StockWebSocketHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.RetryContext;
+import org.springframework.retry.RetryListener;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -31,6 +42,9 @@ public class KafkaConsumerService {
     private final ObjectMapper objectMapper;
     private final RedisTemplate<String, String> redisTemplate;
     private final StockWebSocketHandler webSocketHandler;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private StockRepository stockRepository;
@@ -80,7 +94,9 @@ public class KafkaConsumerService {
             webSocketHandler.broadcastMessage(jsonData);
 
         } catch (Exception e) {
-            log.error("Kafka 메시지 처리 중 오류: ", e);
+            log.error("[ERROR] Error processing message: " + e.getMessage());
+            log.info("[LOG] Send Message to dlt-redis-topic");
+            kafkaProducerService.sendMessage("dlt-redis-topic", message);
         }
     }
 
@@ -107,7 +123,7 @@ public class KafkaConsumerService {
             Map<String, String> latestDataMap = objectMapper.readValue(latestData, new TypeReference<Map<String, String>>() {});
             return stockData.equals(latestDataMap);
         } catch (Exception e) {
-            log.error("중복 데이터 확인 오류: ", e);
+            log.error("[ERROR] 중복 데이터 확인 오류: ", e);
             return false;
         }
     }
@@ -139,47 +155,56 @@ public class KafkaConsumerService {
             stockRepository.save(stock);
         } catch (DataIntegrityViolationException e) {
             // 중복인 경우 로그만 남기고 무시
-            log.warn("Duplicate stock entry ignored: {}", stock.getStockId());
+            log.info("[ERROR] Duplicate stock entry ignored: {}", stock.getStockId());
         }
     }
 
+    @RetryableTopic(
+            attempts = "3",  // 최대 3번 재시도
+            backoff = @Backoff(delay = 2000)  // 재시도 간격 2초
+    )
     @KafkaListener(topics = "volume-rank-topic", groupId = "volume-rank-consumer-group")
     @Transactional
-    public void consumeMessage(String message) {
-        try {
-            // Deserialize JSON to DTO
-            ResponseOutputDTO dto = objectMapper.readValue(message, ResponseOutputDTO.class);
-            // Save to MySQL
-            Integer dataRank = dto.getDataRank();
-            String mkscShrnIscd = dto.getMkscShrnIscd();
-            String stockName = dto.getHtsKorIsnm();
-            String acmlVol = dto.getAcmlVol();
+    public void consumeMessage(String message,@Header(name = "kafka_deliveryAttempt", required = false, defaultValue = "1") int attempt) throws JsonProcessingException {
+        log.info("[LOG] Processing message: {}", message);
 
-            //popular repository
-            Optional<Popular> popular = popularRepository.findByRanking(dataRank);
-            //log.info("popular: "+popular);
-            if (popular.isPresent()) {
-                //데이터가 존재하는 경우 업데이트
-                PopularDTO popularDto = new PopularDTO(popular.get());
+        // Deserialize JSON to DTO
+        ResponseOutputDTO dto = objectMapper.readValue(message, ResponseOutputDTO.class);
 
-                if (!popularDto.getStockId().equals(mkscShrnIscd)) {
-                    updateStockByRanking(mkscShrnIscd, dataRank, stockName, acmlVol);
-                }
-            } else {
-                //데이터가 존재하지 않는 경우 저장
-                log.info("[ERROR] Popular not found for ranking: {}", dataRank);
-                saveStockByRanking(mkscShrnIscd, dataRank, stockName, Integer.valueOf(acmlVol));
+        // 데이터
+        if (dto.getDataRank() == null ||
+                dto.getMkscShrnIscd() == null || dto.getMkscShrnIscd().isEmpty() ||
+                dto.getHtsKorIsnm() == null || dto.getHtsKorIsnm().isEmpty() ||
+                dto.getAcmlVol() == null || dto.getAcmlVol().isEmpty()) {
+            throw new IllegalArgumentException("[ERROR] 필수 필드 중 하나 이상이 비어 있음");
+        }
+
+        // Save to MySQL
+        Integer dataRank = dto.getDataRank();
+        String mkscShrnIscd = dto.getMkscShrnIscd();
+        String stockName = dto.getHtsKorIsnm();
+        String acmlVol = dto.getAcmlVol();
+
+        //popular repository
+        Optional<Popular> popular = popularRepository.findByRanking(dataRank);
+        //log.info("popular: "+popular);
+        if (popular.isPresent()) {
+            //데이터가 존재하는 경우 업데이트
+            PopularDTO popularDto = new PopularDTO(popular.get());
+
+            if (!popularDto.getStockId().equals(mkscShrnIscd)) {
+                updateStockByRanking(mkscShrnIscd, dataRank, stockName, acmlVol);
             }
+        } else {
+            //데이터가 존재하지 않는 경우 저장
+            log.info("[LOG] Popular not found for ranking: {}", dataRank);
+            saveStockByRanking(mkscShrnIscd, dataRank, stockName, Integer.valueOf(acmlVol));
+        }
 
-            //stock repository
-            Optional<Stock> stock = stockRepository.findByStockId(mkscShrnIscd);
-            if (stock.isEmpty()) {
-                saveStock(dto);
-            }
-
-            //System.out.println("Saved to MySQL. Time: " + LocalTime.now());
-        } catch (Exception e) {
-            System.err.println("[ERROR] Error processing message: " + e.getMessage());
+        //stock repository
+        Optional<Stock> stock = stockRepository.findByStockId(mkscShrnIscd);
+        if (stock.isEmpty()) {
+            saveStock(dto);
         }
     }
 }
